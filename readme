@@ -1,0 +1,2015 @@
+# SignFlow AI
+
+### Real-Time Continuous Indian Sign Language (ISL) to English Translation
+
+[![Status](https://img.shields.io/badge/status-in--development-orange)](#project-status)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](#technology-stack)
+[![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](#technology-stack)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)](#technology-stack)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C)](#technology-stack)
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-Computer%20Vision-4285F4)](#technology-stack)
+
+> **SignFlow AI is a portfolio-oriented research prototype that converts continuous Indian Sign Language video into an intermediate sign/gloss sequence, translates that sequence into natural English, and optionally produces speech.**
+
+---
+
+## 1. Project Overview
+
+Traditional gesture-recognition applications often classify one static hand gesture at a time.
+
+For example:
+
+```text
+Hand gesture → A
+Hand gesture → B
+Hand gesture → C
+```
+
+That is useful for alphabet recognition, but it is not enough for **continuous sign-language understanding**.
+
+SignFlow AI is designed around a more advanced pipeline:
+
+```text
+Continuous ISL Video
+        ↓
+Hand + Pose + Facial Landmark Extraction
+        ↓
+Feature Normalization
+        ↓
+Temporal Sequence Construction
+        ↓
+Deep Learning Temporal Model
+        ↓
+Gloss / Sign Sequence
+        ↓
+English Language Normalization
+        ↓
+English Text
+        ↓
+Optional Text-to-Speech
+```
+
+The project is intentionally developed as a **bounded-vocabulary continuous-translation prototype**. It is not intended to claim unrestricted or perfect translation of all Indian Sign Language.
+
+---
+
+# 2. Problem Statement
+
+People who use Indian Sign Language may face communication barriers when interacting with people who do not know sign language.
+
+A useful assistive system should be able to:
+
+- observe signing through a camera,
+- understand movement across time,
+- identify a sequence of signs rather than a single pose,
+- produce readable text,
+- optionally produce speech,
+- operate with low enough latency for interactive use.
+
+The challenge is that sign-language meaning can depend on:
+
+- hand shape,
+- hand orientation,
+- hand location,
+- movement,
+- interaction between both hands,
+- body pose,
+- facial cues,
+- temporal context.
+
+Therefore, SignFlow AI treats sign recognition as a **spatiotemporal sequence-learning problem** rather than a simple image-classification problem.
+
+---
+
+# 3. Project Goals
+
+## Primary Goal
+
+Build a web-based AI system that can process continuous ISL signing and generate a readable English sentence.
+
+## Secondary Goals
+
+1. Build a real-time webcam interface.
+2. Extract structured hand, pose, and facial features.
+3. Train a temporal sequence model.
+4. Support a controlled ISL vocabulary.
+5. Produce an intermediate gloss/sign representation.
+6. Translate glosses into natural English.
+7. Provide optional speech output.
+8. Expose model confidence and latency.
+9. Evaluate recognition and translation performance.
+10. Document the complete system as a professional GitHub portfolio project.
+
+---
+
+# 4. Example
+
+Suppose the signer continuously performs a sequence corresponding to:
+
+```text
+ME → NAME → ARJUN
+```
+
+The system should ideally produce:
+
+```text
+Gloss:
+ME NAME ARJUN
+
+English:
+My name is Arjun.
+```
+
+Another example:
+
+```text
+Gloss:
+I WANT GO COLLEGE
+
+English:
+I want to go to college.
+```
+
+The important point is that the application works with a **sequence** rather than requiring a separate prediction-and-click action for every sign.
+
+---
+
+# 5. What Makes This a Level-3 Project?
+
+There are three useful project levels:
+
+### Level 1 — Static Gesture Recognition
+
+```text
+Image → One gesture
+```
+
+Example:
+
+```text
+Hand → A
+```
+
+### Level 2 — Word / Isolated Sign Recognition
+
+```text
+Video clip → One sign
+```
+
+Example:
+
+```text
+Video → HELLO
+```
+
+### Level 3 — Continuous Sign Recognition / Translation
+
+```text
+Continuous video
+        ↓
+Sign sequence
+        ↓
+Language representation
+        ↓
+English sentence
+```
+
+SignFlow AI targets **Level 3** for its portfolio architecture.
+
+---
+
+# 6. Important Scope Definition
+
+A 30-day project cannot realistically cover every ISL sign, every signer, every regional variation, and unrestricted natural-language translation.
+
+Therefore, the initial release uses:
+
+```text
+Controlled vocabulary
+        +
+Short continuous phrases / sentences
+        +
+Research/public datasets where permitted
+        +
+Project-specific test recordings
+```
+
+The project should be described as:
+
+> **Continuous ISL recognition and translation for a defined vocabulary and evaluation setting.**
+
+Avoid describing it as:
+
+> "A universal Indian Sign Language translator."
+
+That distinction is important for technical accuracy.
+
+---
+
+# 7. System Architecture
+
+```text
+                           ┌───────────────────┐
+                           │       SIGNER      │
+                           └─────────┬─────────┘
+                                     │
+                                     ▼
+                           ┌───────────────────┐
+                           │     WEB CAMERA    │
+                           └─────────┬─────────┘
+                                     │
+                                     ▼
+                           ┌───────────────────┐
+                           │   REACT CLIENT    │
+                           │ TypeScript + UI   │
+                           └─────────┬─────────┘
+                                     │
+                                WebSocket
+                                     │
+                                     ▼
+                           ┌───────────────────┐
+                           │    FASTAPI API    │
+                           └─────────┬─────────┘
+                                     │
+                                     ▼
+                   ┌─────────────────────────────────┐
+                   │       COMPUTER VISION            │
+                   │                                 │
+                   │  Left hand landmarks            │
+                   │  Right hand landmarks           │
+                   │  Body / pose landmarks          │
+                   │  Selected facial landmarks      │
+                   └───────────────┬─────────────────┘
+                                   │
+                                   ▼
+                   ┌─────────────────────────────────┐
+                   │       FEATURE ENGINEERING        │
+                   │                                 │
+                   │ Coordinate normalization        │
+                   │ Scaling / alignment             │
+                   │ Feature fusion                  │
+                   │ Missing-feature handling        │
+                   └───────────────┬─────────────────┘
+                                   │
+                                   ▼
+                   ┌─────────────────────────────────┐
+                   │       TEMPORAL BUFFER            │
+                   │                                 │
+                   │   32 / 48 / 64 frame window     │
+                   └───────────────┬─────────────────┘
+                                   │
+                                   ▼
+                   ┌─────────────────────────────────┐
+                   │       TEMPORAL MODEL             │
+                   │                                 │
+                   │      BiLSTM baseline            │
+                   │          ↓                      │
+                   │      Transformer                │
+                   └───────────────┬─────────────────┘
+                                   │
+                                   ▼
+                   ┌─────────────────────────────────┐
+                   │       GLOSS DECODER              │
+                   │                                 │
+                   │ ME → NAME → ARJUN → ...         │
+                   └───────────────┬─────────────────┘
+                                   │
+                                   ▼
+                   ┌─────────────────────────────────┐
+                   │    ENGLISH LANGUAGE LAYER       │
+                   │                                 │
+                   │ Grammar normalization            │
+                   │ Capitalization                  │
+                   │ Punctuation                     │
+                   │ Duplicate cleanup               │
+                   └───────────────┬─────────────────┘
+                                   │
+                           ┌───────┴────────┐
+                           ▼                ▼
+                  ┌────────────────┐ ┌────────────────┐
+                  │  ENGLISH TEXT  │ │ TEXT-TO-SPEECH │
+                  └────────────────┘ └────────────────┘
+```
+
+---
+
+# 8. Exact AI / ML Logic
+
+## Stage 1 — Video Capture
+
+The browser opens the user's camera and obtains a live video stream.
+
+```text
+Camera
+  ↓
+Frame 1
+Frame 2
+Frame 3
+...
+```
+
+The system does not necessarily need to transmit every raw frame unchanged. Depending on the implementation, feature extraction can happen near the client, at the backend, or at an optimized inference service.
+
+---
+
+## Stage 2 — Landmark Extraction
+
+The vision layer extracts structured points from the frame.
+
+### Hand
+
+A hand is represented by a set of 21 landmarks.
+
+Conceptually:
+
+```text
+Wrist
+  ↓
+Thumb joints + tip
+Index joints + tip
+Middle joints + tip
+Ring joints + tip
+Pinky joints + tip
+```
+
+### Body
+
+Selected body/pose landmarks describe:
+
+- shoulders,
+- elbows,
+- wrists,
+- upper-body motion,
+- other useful reference points.
+
+### Face
+
+Selected facial points can provide cues related to:
+
+- mouth shape,
+- eyebrow movement,
+- facial configuration.
+
+The project can start with a reduced facial feature set to keep the feature vector manageable.
+
+---
+
+# 9. Feature Engineering
+
+Raw camera coordinates are not ideal because they depend on:
+
+- signer position,
+- camera distance,
+- hand position in the frame,
+- body location.
+
+Therefore, the system normalizes landmarks.
+
+A simplified reference-based transformation is:
+
+```text
+x' = x - reference_x
+y' = y - reference_y
+z' = z - reference_z
+```
+
+The coordinates can then be scaled using a hand/body reference distance.
+
+The objective is to make the features describe **relative structure and movement** instead of absolute screen position.
+
+---
+
+# 10. Frame Feature Vector
+
+A project configuration can combine:
+
+```text
+Left hand     → 21 landmarks
+Right hand    → 21 landmarks
+Pose          → selected landmarks
+Face          → selected landmarks
+```
+
+For each point:
+
+```text
+x, y, z
+```
+
+The exact feature dimensionality is configuration-dependent and should be documented in the experiment logs.
+
+Example conceptual representation:
+
+```text
+Frame t
+[
+  x1, y1, z1,
+  x2, y2, z2,
+  ...
+  xn, yn, zn
+]
+```
+
+---
+
+# 11. Temporal Sequence Construction
+
+A single frame is not enough to model movement.
+
+The system therefore stores a rolling sequence:
+
+```text
+Frame 1
+Frame 2
+Frame 3
+...
+Frame 48
+```
+
+This becomes:
+
+```text
+Sequence = [F1, F2, ..., F48]
+```
+
+where each frame is a feature vector.
+
+Conceptually:
+
+```text
+48 frames × feature_dimension
+```
+
+This sequence becomes the input to the temporal model.
+
+---
+
+# 12. Why a Temporal Model?
+
+Consider two signs that have similar hand configurations.
+
+A single frame may look almost identical.
+
+However:
+
+```text
+Frame 1 → hand position
+Frame 2 → movement
+Frame 3 → direction
+Frame 4 → final position
+```
+
+can distinguish the signs.
+
+Therefore:
+
+```text
+Static model:
+Image → sign
+
+SignFlow AI:
+Sequence → sign sequence
+```
+
+This is the core reason the project uses temporal deep learning.
+
+---
+
+# 13. Model Strategy
+
+The project uses an experimental progression rather than assuming one architecture is automatically best.
+
+## Baseline — BiLSTM
+
+```text
+Feature Sequence
+      ↓
+Linear Projection
+      ↓
+BiLSTM
+      ↓
+Dropout
+      ↓
+Decoder
+      ↓
+Gloss prediction
+```
+
+The BiLSTM is useful as an understandable baseline for sequence modeling.
+
+## Main Candidate — Transformer
+
+```text
+Feature Sequence
+      ↓
+Linear Projection
+      ↓
+Positional Encoding
+      ↓
+Transformer Encoder
+      ↓
+Temporal representation
+      ↓
+Gloss Decoder
+```
+
+The final architecture should be selected using actual validation results.
+
+---
+
+# 14. Gloss Representation
+
+Instead of immediately generating English, the vision model predicts an intermediate representation.
+
+Example:
+
+```text
+Visual sequence
+       ↓
+ME NAME ARJUN
+```
+
+This is useful because it creates a clean boundary:
+
+```text
+Vision model
+      ↓
+Gloss
+      ↓
+Language layer
+      ↓
+English
+```
+
+This makes debugging much easier.
+
+---
+
+# 15. Gloss Decoder
+
+The decoder may use:
+
+- confidence filtering,
+- blank/no-sign handling,
+- duplicate suppression,
+- temporal segmentation,
+- sequence decoding.
+
+A simplified example:
+
+```text
+Raw predictions:
+
+ME
+ME
+ME
+NAME
+NAME
+NAME
+ARJUN
+ARJUN
+```
+
+After temporal decoding:
+
+```text
+ME NAME ARJUN
+```
+
+---
+
+# 16. Continuous Sentence Assembly
+
+A continuous session can generate a token stream:
+
+```text
+ME
+NAME
+ARJUN
+```
+
+The application maintains a sentence buffer:
+
+```text
+recognized_tokens = [
+    "ME",
+    "NAME",
+    "ARJUN"
+]
+```
+
+The language layer then processes that sequence.
+
+---
+
+# 17. Gloss → English Layer
+
+The second language stage converts a structured sign/gloss sequence into natural English.
+
+Example:
+
+```text
+ME NAME ARJUN
+      ↓
+My name is Arjun.
+```
+
+Another example:
+
+```text
+I WANT GO COLLEGE
+      ↓
+I want to go to college.
+```
+
+This layer can begin as a controlled normalization system and later evolve toward a sequence-to-sequence or language-model-based approach.
+
+Keeping it separate prevents the visual model from having to solve both sign recognition and English grammar simultaneously.
+
+---
+
+# 18. Text-to-Speech
+
+Final text:
+
+```text
+My name is Arjun.
+```
+
+Optional output:
+
+```text
+🔊 My name is Arjun.
+```
+
+The speech component should be treated as an output layer, not part of the visual recognition model.
+
+---
+
+# 19. Real-Time Prediction Flow
+
+```text
+START
+  ↓
+Open Camera
+  ↓
+Capture Frame
+  ↓
+Extract Landmarks
+  ↓
+Normalize Features
+  ↓
+Append to Sequence Buffer
+  ↓
+Buffer Ready?
+ ┌───────────────┐
+ │ NO            │ → Capture next frame
+ └───────────────┘
+        │ YES
+        ▼
+Temporal Model
+        ↓
+Prediction Scores
+        ↓
+Confidence Check
+        ↓
+Temporal Stabilization
+        ↓
+Gloss Decoder
+        ↓
+Sentence Buffer
+        ↓
+English Layer
+        ↓
+Update UI
+        ↓
+Optional Speech
+        ↓
+Next Window
+```
+
+---
+
+# 20. Real-Time Stabilization
+
+Live predictions can fluctuate:
+
+```text
+GO
+GO
+COME
+GO
+GO
+```
+
+A smoothing layer can aggregate recent outputs.
+
+Example:
+
+```text
+Recent predictions:
+GO GO GO GO COME
+
+Accepted token:
+GO
+```
+
+The exact threshold, window length, and stride should be experimentally tuned.
+
+---
+
+# 21. Proposed Website
+
+The website should be a professional AI dashboard rather than a simple demo page.
+
+## Main Screen
+
+```text
+┌────────────────────────────────────────────────────┐
+│                  SIGNFLOW AI                       │
+│      Continuous ISL → English Translation          │
+├────────────────────────────────────────────────────┤
+│                                                    │
+│   ┌───────────────────────────────┐                │
+│   │                               │                │
+│   │         LIVE CAMERA           │                │
+│   │             🤟                │                │
+│   │                               │                │
+│   └───────────────────────────────┘                │
+│                                                    │
+│   Status       ● LIVE                              │
+│   FPS          18                                  │
+│   Latency      85 ms                               │
+│   Confidence   91%                                 │
+│                                                    │
+├────────────────────────────────────────────────────┤
+│ Detected Gloss                                     │
+│ ┌────────────────────────────────────────────────┐ │
+│ │ ME NAME ARJUN                                  │ │
+│ └────────────────────────────────────────────────┘ │
+│                                                    │
+│ English Translation                                │
+│ ┌────────────────────────────────────────────────┐ │
+│ │ My name is Arjun.                              │ │
+│ └────────────────────────────────────────────────┘ │
+│                                                    │
+│        [ CLEAR ]       [ 🔊 SPEAK ]                │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+# 22. Suggested Website Pages
+
+## `/`
+
+Landing page.
+
+Contains:
+
+- project introduction
+- key capabilities
+- technology stack
+- demo CTA
+- research/portfolio links
+
+## `/translate`
+
+Main live translator.
+
+Contains:
+
+- webcam
+- landmark overlay
+- live gloss
+- English translation
+- confidence
+- latency
+- speech
+
+## `/analyze`
+
+Video-analysis page.
+
+Contains:
+
+- upload video
+- playback
+- detected sign sequence
+- translated output
+- processing metrics
+
+## `/about`
+
+Contains:
+
+- problem
+- architecture
+- methodology
+- dataset references
+- limitations
+
+## `/experiments`
+
+Contains:
+
+- model comparisons
+- metrics
+- training history
+- confusion analysis
+- WER
+- latency
+
+---
+
+# 23. AI Debug Mode
+
+One of the most useful portfolio features is an explicit developer/debug panel.
+
+Example:
+
+```text
+Vision
+------------------------------
+Hands detected: 2
+Pose detected: YES
+Face features: YES
+
+Temporal
+------------------------------
+Window: 48 frames
+Stride: 8
+Buffer: 48 / 48
+
+Model
+------------------------------
+Architecture: Transformer
+Token: GO
+Confidence: 0.91
+
+Performance
+------------------------------
+Inference: 78 ms
+End-to-end: 94 ms
+FPS: 18.6
+```
+
+This allows an interviewer to see how the system works internally.
+
+---
+
+# 24. Technology Stack
+
+## Frontend
+
+- React
+- TypeScript
+- Tailwind CSS
+- WebSocket
+- Browser MediaDevices API
+
+## Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- WebSockets
+
+## Computer Vision
+
+- OpenCV
+- MediaPipe
+- NumPy
+
+## Deep Learning
+
+- PyTorch
+- BiLSTM
+- Transformer Encoder
+
+## Data Processing
+
+- Pandas
+- NumPy
+- scikit-learn
+
+## Visualization
+
+- Matplotlib
+- Optional interactive charts in React
+
+## Deployment / DevOps
+
+- Docker
+- GitHub Actions
+- HTTPS
+- WebSocket-capable hosting
+
+---
+
+# 25. Dataset Strategy
+
+The data strategy should combine research resources and controlled project data.
+
+## Public Research Data
+
+A particularly relevant resource is:
+
+### ISLTranslate
+
+The ISLTranslate dataset was introduced for Indian Sign Language to English translation and contains **31,222 ISL-English sentence/phrase pairs**.
+
+Paper:
+
+> Joshi, A., Agrawal, S., & Modi, A. (2023). *ISLTranslate: Dataset for Translating Indian Sign Language*. Findings of ACL 2023.
+
+Reference:
+
+```text
+https://aclanthology.org/2023.findings-acl.665/
+```
+
+## iSign
+
+The iSign research ecosystem provides resources for Indian Sign Language video/pose-to-text tasks and is useful for understanding larger-scale continuous sign-language research.
+
+Repository:
+
+```text
+https://github.com/Exploration-Lab/iSign
+```
+
+## ISLRTC
+
+The Indian Sign Language Research and Training Centre (ISLRTC) provides official ISL resources, including an ISL Dictionary.
+
+Official site:
+
+```text
+https://islrtc.nic.in/
+```
+
+Review dataset/resource licenses and usage conditions before redistribution, training, or commercial deployment.
+
+---
+
+# 26. Controlled Vocabulary
+
+The first working release should use a manageable set of signs.
+
+Possible categories:
+
+### Greetings
+
+```text
+HELLO
+GOOD
+WELCOME
+THANK
+SORRY
+```
+
+### Identity
+
+```text
+I
+YOU
+MY
+YOUR
+NAME
+```
+
+### Actions
+
+```text
+GO
+COME
+WANT
+NEED
+HELP
+EAT
+DRINK
+```
+
+### Places
+
+```text
+HOME
+SCHOOL
+COLLEGE
+OFFICE
+```
+
+### Time
+
+```text
+TODAY
+TOMORROW
+YESTERDAY
+NOW
+```
+
+The actual vocabulary should be selected based on the dataset and the signs that can be trained and evaluated reliably.
+
+---
+
+# 27. Data Collection Strategy
+
+A custom collection tool should be created early in the project.
+
+Example:
+
+```text
+Select Sign:
+[ GO ▼ ]
+
+Samples:
+[ 000 / 500 ]
+
+┌─────────────────────────┐
+│                         │
+│       LIVE CAMERA       │
+│                         │
+└─────────────────────────┘
+
+[ START RECORDING ]
+```
+
+Pipeline:
+
+```text
+Camera
+  ↓
+Frames
+  ↓
+Landmarks
+  ↓
+Normalized features
+  ↓
+Sequence
+  ↓
+Dataset file
+```
+
+For custom evaluation data, collect samples from multiple people where possible and obtain appropriate consent.
+
+---
+
+# 28. Recommended Dataset Split
+
+Avoid only doing a random frame split when video clips from the same signer appear in both training and testing.
+
+Prefer a signer-aware split:
+
+```text
+TRAIN
+Signers A, B, C, D...
+
+VALIDATION
+Signers E...
+
+TEST
+Signers F...
+```
+
+This provides a more useful estimate of how the system handles a signer it has not seen during training.
+
+---
+
+# 29. Evaluation
+
+Do not judge the project only by accuracy.
+
+## Sign / Token Metrics
+
+- Accuracy
+- Precision
+- Recall
+- F1-score
+
+## Continuous Translation
+
+- Word Error Rate (WER)
+- Sequence accuracy
+- Edit distance
+
+## Real-Time Performance
+
+- FPS
+- Average inference latency
+- End-to-end latency
+- Dropped frames
+- CPU/GPU utilization
+
+## Robustness
+
+Test:
+
+```text
+Different lighting
+Different backgrounds
+Different camera distances
+Different signers
+Left/right hand differences
+Slow signing
+Fast signing
+Partial occlusion
+No-hand frames
+Unsupported signs
+```
+
+---
+
+# 30. Experiment Tracking
+
+Every major experiment should record:
+
+```text
+Experiment ID
+Dataset version
+Vocabulary size
+Feature representation
+Sequence length
+Window stride
+Model
+Hidden dimension
+Number of layers
+Learning rate
+Batch size
+Epochs
+Optimizer
+Validation metrics
+Test metrics
+Latency
+Hardware
+Notes
+```
+
+Example:
+
+```text
+Experiment: EXP-007
+Model: Transformer
+Input: Hand + Pose + Face
+Sequence: 48 frames
+Vocabulary: 50 signs
+Optimizer: AdamW
+Learning rate: <measured setting>
+WER: <measured value>
+F1: <measured value>
+Latency: <measured value>
+```
+
+Never publish invented accuracy, F1, or WER values.
+
+---
+
+# 31. Project Structure
+
+```text
+signflow-ai/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── types/
+│   │   └── utils/
+│   ├── public/
+│   ├── package.json
+│   └── README.md
+│
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── websocket/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── README.md
+│
+├── ml/
+│   ├── data/
+│   │   ├── download.py
+│   │   ├── preprocess.py
+│   │   └── dataset.py
+│   │
+│   ├── features/
+│   │   ├── landmarks.py
+│   │   ├── normalize.py
+│   │   └── sequence.py
+│   │
+│   ├── models/
+│   │   ├── baseline.py
+│   │   ├── bilstm.py
+│   │   └── transformer.py
+│   │
+│   ├── training/
+│   │   ├── train.py
+│   │   ├── validate.py
+│   │   └── evaluate.py
+│   │
+│   ├── inference/
+│   │   └── predictor.py
+│   │
+│   └── checkpoints/
+│
+├── tests/
+│   ├── test_features.py
+│   ├── test_sequence.py
+│   ├── test_decoder.py
+│   └── test_api.py
+│
+├── docs/
+│   ├── architecture.md
+│   ├── dataset.md
+│   ├── model.md
+│   ├── experiments.md
+│   └── api.md
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+---
+
+# 32. Local Setup
+
+## Prerequisites
+
+Recommended:
+
+```text
+Python 3.11+
+Node.js 20+
+Git
+Modern browser
+Webcam
+```
+
+A GPU is helpful for training but is not necessarily required for every stage.
+
+---
+
+## Clone
+
+```bash
+git clone <your-repository-url>
+cd signflow-ai
+```
+
+---
+
+## Python Environment
+
+```bash
+python -m venv .venv
+```
+
+### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+source .venv/bin/activate
+```
+
+Install backend and ML dependencies:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+---
+
+## Run FastAPI
+
+```bash
+uvicorn backend.app.main:app --reload
+```
+
+---
+
+## Run React
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+# 33. Example Backend Endpoints
+
+## Health
+
+```text
+GET /api/v1/health
+```
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "signflow-api"
+}
+```
+
+## Live WebSocket
+
+```text
+WS /ws/v1/translate
+```
+
+Example prediction response:
+
+```json
+{
+  "type": "prediction",
+  "gloss": "ME NAME ARJUN",
+  "english": "My name is Arjun.",
+  "confidence": 0.91,
+  "latency_ms": 87
+}
+```
+
+Production schemas should be versioned and validated.
+
+---
+
+# 34. Model Training Workflow
+
+```text
+Dataset
+   ↓
+Video preprocessing
+   ↓
+Landmark extraction
+   ↓
+Feature normalization
+   ↓
+Sequence generation
+   ↓
+Signer-aware split
+   ↓
+Training
+   ↓
+Validation
+   ↓
+Model selection
+   ↓
+Evaluation
+   ↓
+Checkpoint export
+```
+
+Example conceptual commands:
+
+```bash
+python ml/data/preprocess.py
+
+python ml/features/landmarks.py
+
+python ml/features/sequence.py
+
+python ml/training/train.py --model bilstm
+
+python ml/training/train.py --model transformer
+
+python ml/training/evaluate.py
+```
+
+---
+
+# 35. 30-Day GitHub Development Plan
+
+The project is intentionally organized so that **every day produces a meaningful GitHub commit**.
+
+| Day | Deliverable | Suggested Commit |
+|---:|---|---|
+| 1 | Repository + project docs | `Day 01: Initialize SignFlow AI project` |
+| 2 | FastAPI backend | `Day 02: Setup FastAPI backend` |
+| 3 | React + TypeScript shell | `Day 03: Create React frontend shell` |
+| 4 | Webcam capture | `Day 04: Add webcam capture interface` |
+| 5 | WebSocket protocol | `Day 05: Define real-time WebSocket protocol` |
+| 6 | Hand landmark extraction | `Day 06: Add hand landmark extraction` |
+| 7 | Body pose extraction | `Day 07: Add body pose extraction` |
+| 8 | Facial features | `Day 08: Add selected facial features` |
+| 9 | Normalization | `Day 09: Implement landmark normalization` |
+| 10 | Sequence buffer | `Day 10: Implement temporal sequence buffer` |
+| 11 | Dataset loader | `Day 11: Add ISL dataset loader` |
+| 12 | Video preprocessing | `Day 12: Build video preprocessing pipeline` |
+| 13 | Standard sequence format | `Day 13: Standardize sequence dataset format` |
+| 14 | Signer-aware split | `Day 14: Add signer-aware dataset splitting` |
+| 15 | ML baseline | `Day 15: Implement sequence classification baseline` |
+| 16 | BiLSTM | `Day 16: Implement BiLSTM sequence model` |
+| 17 | Training pipeline | `Day 17: Add PyTorch training pipeline` |
+| 18 | Evaluation | `Day 18: Add model evaluation metrics` |
+| 19 | Transformer | `Day 19: Implement temporal Transformer` |
+| 20 | Vocabulary/tokenizer | `Day 20: Add gloss vocabulary and tokenizer` |
+| 21 | Continuous decoder | `Day 21: Implement continuous gloss decoding` |
+| 22 | Temporal smoothing | `Day 22: Add temporal prediction smoothing` |
+| 23 | Sentence assembly | `Day 23: Implement continuous sentence assembly` |
+| 24 | English layer | `Day 24: Add gloss-to-English translation layer` |
+| 25 | English post-processing | `Day 25: Add English normalization and cleanup` |
+| 26 | Live inference | `Day 26: Connect real-time inference pipeline` |
+| 27 | Dashboard | `Day 27: Build production-style translation dashboard` |
+| 28 | Speech | `Day 28: Add text-to-speech output` |
+| 29 | Hardening | `Day 29: Add production testing and deployment hardening` |
+| 30 | Final release | `Day 30: Release SignFlow AI v1.0` |
+
+---
+
+# 36. Milestones
+
+## Milestone 1 — Vision Pipeline
+
+**Day 10**
+
+```text
+Camera
+ ↓
+Hand + Pose + Face
+ ↓
+Normalized features
+ ↓
+Temporal sequence
+```
+
+## Milestone 2 — Trained Temporal Model
+
+**Day 19**
+
+```text
+Sequence
+ ↓
+BiLSTM / Transformer
+ ↓
+Sign prediction
+```
+
+## Milestone 3 — Continuous Recognition
+
+**Day 23**
+
+```text
+Continuous video
+ ↓
+Gloss sequence
+```
+
+## Milestone 4 — Translation
+
+**Day 25**
+
+```text
+Gloss
+ ↓
+Natural English
+```
+
+## Milestone 5 — Product
+
+**Day 30**
+
+```text
+Webcam
+ ↓
+Continuous ISL
+ ↓
+Gloss
+ ↓
+English
+ ↓
+Speech
+```
+
+---
+
+# 37. GitHub Workflow
+
+Every development day:
+
+```bash
+git status
+git add .
+git commit -m "Day XX: <meaningful change>"
+git push origin main
+```
+
+Use meaningful commits.
+
+Good:
+
+```text
+Day 16: Implement BiLSTM sequence model
+```
+
+Avoid:
+
+```text
+update
+final
+changes
+new
+test
+```
+
+---
+
+# 38. GitHub Repository Hygiene
+
+Do not upload:
+
+```text
+.env
+API keys
+private recordings
+large raw datasets
+personal user information
+unlicensed assets
+large model artifacts unless appropriate
+```
+
+Use `.gitignore`.
+
+For large models, consider:
+
+- Git LFS
+- release assets
+- model registries
+- Hugging Face
+- external artifact storage
+
+---
+
+# 39. Testing Strategy
+
+## Unit Tests
+
+Test:
+
+```text
+Landmark normalization
+Missing point handling
+Feature dimensions
+Sequence buffering
+Token decoding
+Confidence filtering
+API schemas
+```
+
+## Integration Tests
+
+Test:
+
+```text
+Frontend
+   ↓
+WebSocket
+   ↓
+FastAPI
+   ↓
+Inference
+   ↓
+Prediction
+   ↓
+Frontend
+```
+
+## Model Tests
+
+Test using:
+
+```text
+Known signer
+Unseen signer
+Different lighting
+Different backgrounds
+Different signing speed
+```
+
+---
+
+# 40. Privacy
+
+The application uses a camera, so privacy should be a first-class design requirement.
+
+Recommended principles:
+
+- Do not store raw video by default.
+- Explain what data is processed.
+- Ask for consent before collecting user recordings.
+- Remove identifying metadata where practical.
+- Do not publish private recordings.
+- Keep local processing local when feasible.
+- Provide a clear reset/clear operation.
+- Follow the license and usage requirements of every external dataset.
+- Never represent the system as an authoritative interpreter.
+
+---
+
+# 41. Limitations
+
+The system can fail because of:
+
+- unseen signs,
+- regional variations,
+- signer differences,
+- poor lighting,
+- hand occlusion,
+- body occlusion,
+- camera placement,
+- low frame rate,
+- background clutter,
+- ambiguous gestures,
+- facial cues that are not captured,
+- model bias from limited training data.
+
+The English language layer can also introduce grammatical changes or errors.
+
+Therefore:
+
+> **System outputs should be treated as predictions, not guaranteed translations.**
+
+---
+
+# 42. Future Scope
+
+## v1.1
+
+- larger vocabulary
+- improved signer diversity
+- better calibration
+- multilingual output
+- improved video upload analysis
+
+## v1.2
+
+- stronger temporal segmentation
+- improved Transformer decoder
+- richer facial/body representation
+- better sequence decoding
+- better offline inference
+
+## v2.0
+
+- much larger vocabulary
+- signer-independent evaluation
+- more complete facial/body modeling
+- optimized edge inference
+- direct multimodal sign-to-language translation
+- stronger translation evaluation
+
+---
+
+# 43. Research Direction
+
+A future architecture could evolve from:
+
+```text
+Video
+ ↓
+Landmarks
+ ↓
+Gloss
+ ↓
+English
+```
+
+to:
+
+```text
+Video
+ ↓
+Multimodal visual encoder
+ ↓
+Temporal representation
+ ↓
+Direct language decoder
+ ↓
+Natural English
+```
+
+This is a significantly larger research problem and would require more data, compute, experimentation, and rigorous evaluation.
+
+---
+
+# 44. Portfolio Value
+
+SignFlow AI demonstrates multiple engineering areas in one project:
+
+```text
+Computer Vision
+        +
+Feature Engineering
+        +
+Deep Learning
+        +
+Sequence Modeling
+        +
+NLP
+        +
+Real-Time Systems
+        +
+WebSockets
+        +
+React
+        +
+FastAPI
+        +
+Model Evaluation
+        +
+Deployment
+```
+
+It therefore works as more than a basic college ML project.
+
+---
+
+# 45. Interview Explanation
+
+### What problem does your project solve?
+
+> SignFlow AI is designed to reduce communication barriers by translating continuous Indian Sign Language signing into English text and optional speech.
+
+### Why not classify individual frames?
+
+> A single frame captures hand configuration but not movement over time. Continuous signing requires temporal information, so the system constructs feature sequences and uses a temporal deep-learning model.
+
+### Why landmarks?
+
+> Landmarks provide a structured representation of hand, body, and facial information and can reduce the visual complexity of the learning problem compared with feeding every raw frame directly to a large video model.
+
+### Why BiLSTM?
+
+> BiLSTM provides a strong baseline for sequence modeling and gives us a simpler architecture against which to compare a Transformer.
+
+### Why Transformer?
+
+> The Transformer allows attention across different temporal positions, making it useful for modeling relationships across a sign sequence.
+
+### Why a gloss layer?
+
+> It separates visual recognition from language generation. This makes the pipeline easier to evaluate, debug, and improve independently.
+
+### Why WER?
+
+> Continuous translation is a sequence prediction task, so Word Error Rate is useful for measuring differences between predicted and reference word sequences.
+
+### Is it a complete ISL translator?
+
+> No. The first release is a bounded-vocabulary continuous translation prototype. It is designed to demonstrate the architecture and engineering pipeline rather than claim unrestricted human-level interpretation.
+
+---
+
+# 46. Suggested Portfolio Description
+
+## One-Line Description
+
+> **Real-time continuous Indian Sign Language to English translation using multimodal landmarks, temporal deep learning, sequence decoding, and natural-language generation.**
+
+## Resume Description
+
+> **Built SignFlow AI, a real-time continuous Indian Sign Language translation prototype using React, FastAPI, MediaPipe, and PyTorch; developed a multimodal landmark pipeline, temporal BiLSTM/Transformer models, gloss decoding, English normalization, WebSocket inference, and text-to-speech output.**
+
+## GitHub Description
+
+> **A real-time continuous ISL → English translation research prototype using hand, pose, and facial landmarks with temporal deep learning.**
+
+---
+
+# 47. Demo Flow
+
+A strong project demonstration should follow this sequence:
+
+```text
+1. Open website
+2. Show camera permission
+3. Start live translation
+4. Show detected landmarks
+5. Sign a short phrase
+6. Show gloss sequence
+7. Show English translation
+8. Trigger speech output
+9. Open AI Debug Mode
+10. Show latency and confidence
+11. Open Experiments page
+12. Explain model comparison
+```
+
+This makes the demo tell a complete technical story.
+
+---
+
+# 48. Release Checklist
+
+Before publishing `v1.0.0`:
+
+```text
+[ ] README complete
+[ ] Architecture documented
+[ ] Dataset sources documented
+[ ] Licenses/usage conditions checked
+[ ] Training pipeline reproducible
+[ ] Model evaluation completed
+[ ] No fabricated performance metrics
+[ ] Unit tests passing
+[ ] Integration tests passing
+[ ] Webcam works
+[ ] Continuous recognition works
+[ ] Gloss output works
+[ ] English output works
+[ ] Speech works
+[ ] Error states handled
+[ ] Responsive UI works
+[ ] Demo screenshots added
+[ ] Demo video added
+[ ] Secrets removed
+[ ] .env ignored
+[ ] Release tag created
+```
+
+---
+
+# 49. Project Status
+
+```text
+Project: SignFlow AI
+Domain: Accessibility / Artificial Intelligence
+Target Language: Indian Sign Language
+Input: Continuous webcam video
+Intermediate Output: Sign / Gloss sequence
+Primary Output: English text
+Optional Output: Speech
+Frontend: React + TypeScript
+Backend: FastAPI
+Computer Vision: MediaPipe + OpenCV
+Deep Learning: PyTorch
+Temporal Models: BiLSTM + Transformer
+Development Duration: 30 Days
+Repository: In Development
+Version: 0.1 → 1.0
+```
+
+---
+
+# 50. Final System Goal
+
+```text
+                  SIGNER
+                    │
+                    ▼
+                WEBCAM
+                    │
+                    ▼
+            VIDEO FRAME STREAM
+                    │
+                    ▼
+         ┌──────────────────────┐
+         │  LANDMARK ENGINE     │
+         │                      │
+         │ Hand + Pose + Face   │
+         └──────────┬───────────┘
+                    │
+                    ▼
+          FEATURE NORMALIZATION
+                    │
+                    ▼
+             TEMPORAL WINDOW
+                    │
+                    ▼
+         ┌──────────────────────┐
+         │  TEMPORAL MODEL      │
+         │  BiLSTM / Transformer│
+         └──────────┬───────────┘
+                    │
+                    ▼
+              GLOSS DECODER
+                    │
+                    ▼
+            SIGN SEQUENCE
+                    │
+                    ▼
+          ENGLISH LANGUAGE LAYER
+                    │
+                    ▼
+             NATURAL ENGLISH
+                    │
+              ┌─────┴─────┐
+              ▼           ▼
+            TEXT        SPEECH
+```
+
+---
+
+# 51. References
+
+### ISLTranslate
+
+Joshi, A., Agrawal, S., & Modi, A. (2023).
+
+**ISLTranslate: Dataset for Translating Indian Sign Language.**
+
+Findings of the Association for Computational Linguistics: ACL 2023.
+
+```text
+https://aclanthology.org/2023.findings-acl.665/
+```
+
+### ISLRTC
+
+Indian Sign Language Research and Training Centre.
+
+```text
+https://islrtc.nic.in/
+```
+
+### iSign
+
+Indian Sign Language research resources and benchmark ecosystem.
+
+```text
+https://github.com/Exploration-Lab/iSign
+```
+
+### MediaPipe
+
+Google MediaPipe Tasks documentation.
+
+```text
+https://ai.google.dev/edge/mediapipe/
+```
+
+### PyTorch
+
+```text
+https://pytorch.org/
+```
+
+### FastAPI
+
+```text
+https://fastapi.tiangolo.com/
+```
+
+### React
+
+```text
+https://react.dev/
+```
+
+---
+
+# 52. License
+
+Choose a license that is compatible with:
+
+- your source code,
+- your dependencies,
+- your model,
+- the datasets you use,
+- any third-party assets.
+
+If dataset licensing prevents redistribution, do not include the dataset in the repository.
+
+---
+
+# ⭐ Closing Vision
+
+SignFlow AI is not simply an image classifier.
+
+It is a complete AI engineering pipeline:
+
+```text
+Vision
+  ↓
+Structured Representation
+  ↓
+Temporal Learning
+  ↓
+Sequence Decoding
+  ↓
+Language Processing
+  ↓
+Real-Time Web System
+  ↓
+Accessible Output
+```
+
+The objective of the project is to demonstrate how modern computer vision, temporal deep learning, natural-language processing, and real-time web engineering can be combined to build an accessibility-focused AI application.
