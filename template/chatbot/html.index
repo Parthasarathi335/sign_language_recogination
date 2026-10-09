@@ -1,0 +1,28 @@
+<button class="cb-launcher" id="cbLauncher" aria-label="Open chat" aria-expanded="false" aria-controls="cbPanel">
+  <svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>
+</button>
+
+<section class="cb-panel" id="cbPanel" role="dialog" aria-label="Sign Bridge assistant" hidden>
+  <header class="cb-head">
+    <span class="cb-avatar">
+      <svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11m0-6.5v-1a1.5 1.5 0 0 1 3 0V11m0-5a1.5 1.5 0 0 1 3 0v6m0-3.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1.5a6 6 0 0 1-5-2.7L3.5 15.5a1.6 1.6 0 0 1 2.6-1.8L8 16"/></svg>
+    </span>
+    <div class="cb-title">
+      <b>Bridge assistant</b>
+      <small><span class="cb-dot"></span>Here to help</small>
+    </div>
+    <button class="cb-close" id="cbClose" aria-label="Close chat">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </header>
+
+  <div class="cb-log" id="cbLog" role="log" aria-live="polite"></div>
+  <div class="cb-chips" id="cbChips"></div>
+
+  <div class="cb-input">
+    <input id="cbInput" type="text" placeholder="Ask about signs, camera, privacy…" autocomplete="off" aria-label="Your message">
+    <button id="cbSend" aria-label="Send message">
+      <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></svg>
+    </button>
+  </div>
+</section>
